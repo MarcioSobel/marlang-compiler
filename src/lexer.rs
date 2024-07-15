@@ -19,7 +19,11 @@ pub fn tokenize(contents: &String) -> Result<Vec<Token>, Box<dyn Error>> {
             buffer.push(char);
         }
 
-        if char.is_whitespace() || next_char == Some(&';') {
+        if char.is_whitespace() || char == ';' || next_char == Some(&';') {
+            if buffer.len() == 0 {
+                continue;
+            }
+
             let token =
                 get_token_type(&buffer).expect(format!("Unexpected token: {buffer}").as_str());
             tokens.push(token);
@@ -91,6 +95,25 @@ mod tests {
         let contents = String::from("return;\n");
         assert_eq!(
             vec![Token::Return, Token::Semicolon],
+            tokenize(&contents).expect("should be able to lex contents")
+        );
+    }
+
+    #[test]
+    fn complex_lex() {
+        let contents = String::from("return 20;return ;; 5 9 ;");
+        assert_eq!(
+            vec![
+                Token::Return,
+                Token::Number(20),
+                Token::Semicolon,
+                Token::Return,
+                Token::Semicolon,
+                Token::Semicolon,
+                Token::Number(5),
+                Token::Number(9),
+                Token::Semicolon
+            ],
             tokenize(&contents).expect("should be able to lex contents")
         );
     }
