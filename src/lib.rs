@@ -1,3 +1,4 @@
+use lexer::{Lexer, Token};
 use std::{error::Error, fs};
 
 pub mod lexer;
@@ -9,7 +10,7 @@ pub struct Config {
 impl Config {
     pub fn build(args: &[String]) -> Result<Config, &'static str> {
         if args.len() < 2 {
-            return Err("Please, provide a file!");
+            return Err("No file provided");
         }
 
         let file_path = &args[1];
@@ -21,7 +22,8 @@ impl Config {
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(config.file_path)?;
-    lexer::tokenize(&contents)?;
+    let mut lexer = Lexer::new(&contents);
+    lexer.tokenize();
 
     Ok(())
 }
