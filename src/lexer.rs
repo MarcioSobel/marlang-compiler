@@ -96,13 +96,13 @@ impl<'a> Lexer<'a> {
                 kind = TokenKind::Number(value);
             }
 
-            if char.is_whitespace() {
-                kind = self.consume_whitespace();
-            }
-
             if self.is_identifier_start() {
                 let identifier = self.consume_identifier();
                 kind = Self::get_identifier_kind(&identifier);
+            }
+
+            if char.is_whitespace() {
+                kind = self.consume_whitespace();
             }
 
             if kind == TokenKind::Unknown {
@@ -142,7 +142,7 @@ impl<'a> Lexer<'a> {
     fn consume_identifier(&mut self) -> String {
         let mut buffer = String::new();
         while let Some(char) = self.peek() {
-            if char.is_whitespace() {
+            if Self::is_separator(&char) {
                 break;
             }
 
@@ -178,8 +178,19 @@ impl<'a> Lexer<'a> {
             '/' => TokenKind::Slash,
             '(' => TokenKind::OpenParen,
             ')' => TokenKind::CloseParen,
-            _ => TokenKind::Invalid,
+            _ => self.consume_invalid(),
         }
+    }
+
+    fn consume_invalid(&mut self) -> TokenKind {
+        while let Some(char) = self.peek() {
+            if Self::is_separator(&char) {
+                break;
+            }
+
+            self.consume();
+        }
+        TokenKind::Invalid
     }
 
     fn get_identifier_kind(identifier: &String) -> TokenKind {
@@ -194,5 +205,9 @@ impl<'a> Lexer<'a> {
             return char.is_alphabetic() || char == '_';
         }
         false
+    }
+
+    fn is_separator(char: &char) -> bool {
+        char.is_whitespace() || char == &';'
     }
 }
