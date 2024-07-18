@@ -1,4 +1,4 @@
-use lexer::{Lexer, Token};
+use lexer::Lexer;
 use std::{error::Error, fs};
 
 pub mod lexer;

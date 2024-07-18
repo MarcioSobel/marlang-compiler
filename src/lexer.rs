@@ -3,25 +3,42 @@ use std::str::Chars;
 
 #[derive(Debug, PartialEq)]
 pub enum TokenKind {
+    // literals
     Number(isize),
-    Return,
+
+    // operators
+    Plus,
+    Minus,
+    Asterisk,
+    Slash,
+
+    // separators
     Semicolon,
+    OpenParen,
+    CloseParen,
+
+    // keywords
+    Return,
+
+    // other
+    Invalid,
+    Unknown,
+    Identifier,
     Whitespace,
     Eof,
-    Invalid,
 }
 
 #[derive(Debug)]
 pub struct Token {
-    kind: TokenKind,
-    span: TextSpan,
+    pub kind: TokenKind,
+    pub span: TextSpan,
 }
 
 #[derive(Debug)]
 pub struct TextSpan {
-    start: usize,
-    end: usize,
-    literal: String,
+    pub start: usize,
+    pub end: usize,
+    pub literal: String,
 }
 
 pub struct Lexer<'a> {
@@ -62,6 +79,7 @@ impl<'a> Lexer<'a> {
     pub fn tokenize(&mut self) -> Vec<Token> {
         let mut tokens: Vec<Token> = Vec::new();
         while let Some(token) = self.next_token() {
+            println!("{:?}", token);
             tokens.push(token);
         }
 
@@ -71,7 +89,7 @@ impl<'a> Lexer<'a> {
     pub fn next_token(&mut self) -> Option<Token> {
         let start = self.current_position;
         while let Some(char) = self.peek() {
-            let mut kind = TokenKind::Invalid;
+            let mut kind = TokenKind::Unknown;
 
             if char.is_digit(10) {
                 let value = self.consume_number();
@@ -82,8 +100,13 @@ impl<'a> Lexer<'a> {
                 kind = self.consume_whitespace();
             }
 
-            if kind == TokenKind::Invalid {
-                self.consume_invalid();
+            if self.is_identifier_start() {
+                let identifier = self.consume_identifier();
+                kind = Self::get_identifier_kind(&identifier);
+            }
+
+            if kind == TokenKind::Unknown {
+                kind = self.consume_symbol();
             }
 
             let end = self.current_position;
@@ -116,13 +139,17 @@ impl<'a> Lexer<'a> {
         number
     }
 
-    fn consume_invalid(&mut self) {
+    fn consume_identifier(&mut self) -> String {
+        let mut buffer = String::new();
         while let Some(char) = self.peek() {
             if char.is_whitespace() {
                 break;
             }
-            self.consume();
+
+            let char = self.consume().unwrap();
+            buffer.push(char);
         }
+        buffer
     }
 
     fn consume_whitespace(&mut self) -> TokenKind {
@@ -139,5 +166,33 @@ impl<'a> Lexer<'a> {
         }
 
         TokenKind::Whitespace
+    }
+
+    fn consume_symbol(&mut self) -> TokenKind {
+        let char = self.consume().unwrap();
+        match char {
+            ';' => TokenKind::Semicolon,
+            '+' => TokenKind::Plus,
+            '-' => TokenKind::Minus,
+            '*' => TokenKind::Asterisk,
+            '/' => TokenKind::Slash,
+            '(' => TokenKind::OpenParen,
+            ')' => TokenKind::CloseParen,
+            _ => TokenKind::Invalid,
+        }
+    }
+
+    fn get_identifier_kind(identifier: &String) -> TokenKind {
+        match identifier.as_str() {
+            "return" => TokenKind::Return,
+            _ => TokenKind::Identifier,
+        }
+    }
+
+    fn is_identifier_start(&mut self) -> bool {
+        if let Some(char) = self.peek() {
+            return char.is_alphabetic() || char == '_';
+        }
+        false
     }
 }
