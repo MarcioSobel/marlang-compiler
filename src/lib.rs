@@ -1,7 +1,7 @@
-use lexer::Lexer;
+use ast::{lexer::Lexer, parser::Parser};
 use std::{error::Error, fs};
 
-pub mod lexer;
+pub mod ast;
 
 pub struct Config {
     pub file_path: String,
@@ -22,8 +22,12 @@ impl Config {
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(config.file_path)?;
+
     let mut lexer = Lexer::new(&contents);
-    lexer.tokenize();
+    let tokens = lexer.tokenize();
+
+    let mut parser = Parser::new(tokens);
+    parser.parse();
 
     Ok(())
 }

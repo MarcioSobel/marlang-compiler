@@ -1,7 +1,7 @@
 use std::iter::Peekable;
 use std::str::Chars;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TokenKind {
     // literals
     Number(isize),
@@ -12,7 +12,7 @@ pub enum TokenKind {
     Asterisk,
     Slash,
 
-    // separators
+    // delimiters
     Semicolon,
     OpenParen,
     CloseParen,
@@ -28,13 +28,13 @@ pub enum TokenKind {
     Eof,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub kind: TokenKind,
     pub span: TextSpan,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TextSpan {
     pub start: usize,
     pub end: usize,
@@ -79,7 +79,6 @@ impl<'a> Lexer<'a> {
     pub fn tokenize(&mut self) -> Vec<Token> {
         let mut tokens: Vec<Token> = Vec::new();
         while let Some(token) = self.next_token() {
-            println!("{:?}", token);
             tokens.push(token);
         }
 
@@ -142,7 +141,7 @@ impl<'a> Lexer<'a> {
     fn consume_identifier(&mut self) -> String {
         let mut buffer = String::new();
         while let Some(char) = self.peek() {
-            if Self::is_separator(&char) {
+            if Self::is_delimiter(&char) {
                 break;
             }
 
@@ -184,7 +183,7 @@ impl<'a> Lexer<'a> {
 
     fn consume_invalid(&mut self) -> TokenKind {
         while let Some(char) = self.peek() {
-            if Self::is_separator(&char) {
+            if Self::is_delimiter(&char) {
                 break;
             }
 
@@ -207,7 +206,7 @@ impl<'a> Lexer<'a> {
         false
     }
 
-    fn is_separator(char: &char) -> bool {
+    fn is_delimiter(char: &char) -> bool {
         char.is_whitespace() || char == &';'
     }
 }
